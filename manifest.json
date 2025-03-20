@@ -1,0 +1,8 @@
+{
+    "name": "reRadar24",
+    "loadsBackend": true,
+    "entry": "/ui/ui.qml",
+    "id": "reRadar24",
+    "supportsScaling": true,
+    "canHaveMultipleFrontends": true
+}
