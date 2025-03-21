@@ -28,7 +28,6 @@ Rectangle {
 
         Component.onCompleted: {
             requestWaypoints();
-            requestNearestAircraft();
         }
 
         onMessageReceived: (type, contents) => {
@@ -36,7 +35,7 @@ Rectangle {
             if (type === 200) {
                 console.log("Init");
                 requestWaypoints();
-                requestNearestAircraft();
+
                 return;
             }
             var json_contents;
@@ -64,6 +63,9 @@ Rectangle {
                 break;
             case 102:
                 waypoints = json_contents.waypoints;
+                latitude = waypoints[0].latitude;
+                longitude = waypoints[0].longitude;
+                requestNearestAircraft();
                 console.log("wp: ", waypoints);
                 break;
             case 103:
