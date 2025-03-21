@@ -12,6 +12,7 @@ Rectangle {
     property real longitude: 12.4964 // Default longitude
     property real radius: 50.0       // Default search radius in Nm
     property var aircraftInfo: {}
+    property var flId: ""
     property var waypoints: [] // List of waypoints
     function showPopup() {
         popupLayer.visible = true;
@@ -55,7 +56,7 @@ Rectangle {
                     json_contents.aircraft.forEach(a => {
                         console.log(a);
                         mostTrackedAircraftModel.append({
-                            info: `${a.callsign} | Model: ${a.model} | Route: ${a.route} (${a.flight}) | Squawk: ${a.squawk}`,
+                            info: `${a.callsign} | Model: ${a.model} | Route: ${a.route} (${a.flight}) | Squawk: ${a.squawk} |  Clicks: ${a.followers}`,
                             flightId: a.flightId
                         });
                     });
@@ -86,6 +87,8 @@ Rectangle {
         }
 
         function requestAircraftInfo(flightId) {
+            flId = flightId;
+            console.log(flId);
             sendMessage(4, JSON.stringify({
                 flightId: flightId
             }));
@@ -221,6 +224,7 @@ Rectangle {
             anchors.centerIn: parent
             text: "Refresh"
             font.pointSize: 28
+
             color: "black"
         }
 
@@ -246,33 +250,39 @@ Rectangle {
         anchors.topMargin: 20
         anchors.leftMargin: 10
         anchors.rightMargin: 10
-        anchors.bottomMargin: 20 // Add margin between list and refresh button
+        anchors.bottomMargin: 20 // Margin between the list and the refresh button
         color: "transparent"
-        z: 1 // Make sure listContainer is behind refresh button
+        z: 1 // Keep the list container behind the refresh button
 
         ListView {
             id: aircraftListView
             anchors.fill: parent
-            clip: true // Enable clipping to keep list items within the container
+            clip: true // Clip list items to stay within the container's bounds
             model: currentView === "nearest" ? nearestAircraftModel : mostTrackedAircraftModel
 
             delegate: Rectangle {
-                width: aircraftListView.width
-                height: 70
+                width: aircraftListView.width * 0.85
+                anchors.horizontalCenter: parent.horizontalCenter
+                height: Math.max(60, textItem.height) // Minimum height of 60px for list items
                 border.color: "black"
                 color: "white"
 
                 Text {
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: {
-                            appload.requestAircraftInfo(flightId);
-                        }
-                    }
+                    id: textItem
+                    width: parent.width  // Set width to the parent Rectangle's width to ensure wrapping
+                    wrapMode: Text.WordWrap // Enable word wrapping
                     anchors.centerIn: parent
                     text: info
                     font.pointSize: 24
                     color: "black"
+                    verticalAlignment: Text.AlignVCenter // Align text vertically in the center
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        appload.requestAircraftInfo(flightId);
+                    }
                 }
             }
         }
@@ -295,7 +305,6 @@ Rectangle {
             radius: 0 // No rounded corners for better e-ink rendering
             border.color: "#555555" // Dark grey border
             border.width: 2
-
             // Close 'X' button at the top right
             Button {
                 id: closeButton
@@ -310,6 +319,27 @@ Rectangle {
                 height: 40
                 onClicked: hidePopup()
                 contentItem: Text {
+                    text: parent.text
+                    font.pixelSize: 25
+                    color: "#000"
+                }
+                background: Rectangle {
+                    color: rgba(255, 255, 255, 0)
+                }
+            }
+
+            Button {
+                id: reloadButton
+                anchors.topMargin: 4
+                anchors.rightMargin: 4
+                anchors.top: closeButton.bottom
+                text: "Reload"
+                anchors.right: parent.right
+                width: 40
+                height: 40
+                onClicked: appload.requestAircraftInfo(flId)
+                contentItem: Text {
+                    horizontalAlignment: Text.AlignRight
                     text: parent.text
                     font.pixelSize: 25
                     color: "#000"

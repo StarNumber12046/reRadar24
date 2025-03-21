@@ -186,15 +186,15 @@ func FormatMostTracked(aircraft []flights.Fr24MostTrackedData) BackendMostTracke
 				break
 			}
 		}
-		fmt.Println(plane.Model)
 		formatted_plane := BackendMostTrackedAircraft{
 
-			Model:    stringOr(current_plane.ModelFullName, stringOr(plane.Model, stringOr(plane.Aircraft_type, "N/A"))),
-			Route:    stringOr(plane.From_iata, "N/A") + "->" + stringOr(plane.To_iata, "N/A"),
-			Flight:   stringOr(plane.Flight, "private owner"),
-			Squawk:   stringOr(plane.Squawk, "N/A"),
-			Callsign: stringOr(plane.Callsign, "N/A"),
-			FlightId: plane.Flight_id,
+			Model:     stringOr(current_plane.ModelFullName, stringOr(plane.Model, stringOr(plane.Aircraft_type, "N/A"))),
+			Route:     stringOr(plane.From_iata, "N/A") + "->" + stringOr(plane.To_iata, "N/A"),
+			Flight:    stringOr(plane.Flight, "private owner"),
+			Squawk:    stringOr(plane.Squawk, "N/A"),
+			Callsign:  stringOr(plane.Callsign, "N/A"),
+			Followers: plane.Clicks,
+			FlightId:  plane.Flight_id,
 		}
 		formatted_aircraft = append(formatted_aircraft, formatted_plane)
 	}
@@ -238,18 +238,13 @@ func GetUserWaypoints() []Waypoint {
 func GetAircraftInfo(flightId string) AircraftInfoResponse {
 	var requester common.Requester = webrequest.SendRequest
 	flight, err := client.GetFlightDetails(requester, flightId)
-	fmt.Println("---------GOT FLIGHT----------")
-	var f, _ = json.Marshal(flight)
-	fmt.Println(string(f))
 	if err != nil {
 		fmt.Println(err)
 		return AircraftInfoResponse{}
 	}
-	fmt.Println("Status:" + flight.Status.Text)
 	var imageUrl string
 	if len(flight.Aircraft.Images.Large) > 0 {
 		imageUrl = flight.Aircraft.Images.Large[0].Src
-		fmt.Printf("{\"Copyright\": \"%s\", \"Src\": \"%s\", \"Link\": \"%s\", \"Source\": \"%s\"}\n", flight.Aircraft.Images.Large[0].Copyright, flight.Aircraft.Images.Large[0].Src, flight.Aircraft.Images.Large[0].Link, flight.Aircraft.Images.Large[0].Source)
 	} else if len(flight.Aircraft.Images.Medium) > 0 {
 		imageUrl = flight.Aircraft.Images.Medium[0].Src
 	} else if len(flight.Aircraft.Images.Thumbnails) > 0 {
@@ -257,7 +252,6 @@ func GetAircraftInfo(flightId string) AircraftInfoResponse {
 	}
 	speed := flight.Trail[0].Spd
 	altitude := flight.Trail[0].Alt
-	fmt.Println(imageUrl)
 	return AircraftInfoResponse{
 		AircraftImageUrl: imageUrl,
 		Country:          flight.Aircraft.Country.Name,

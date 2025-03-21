@@ -127,12 +127,13 @@ type BackendAircraftResponse struct {
 }
 
 type BackendMostTrackedAircraft struct {
-	Model    string `json:"model"`
-	Route    string `json:"route"`
-	Flight   string `json:"flight"`
-	Squawk   string `json:"squawk"`
-	Callsign string `json:"callsign"`
-	FlightId string `json:"flightId"`
+	Model     string `json:"model"`
+	Route     string `json:"route"`
+	Flight    string `json:"flight"`
+	Squawk    string `json:"squawk"`
+	Callsign  string `json:"callsign"`
+	FlightId  string `json:"flightId"`
+	Followers int    `json:"followers"`
 }
 
 type BackendMostTrackedAircraftResponse struct {
