@@ -325,7 +325,7 @@ Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
                 font.pixelSize: 48 // Larger font for readability
                 font.bold: true
-                anchors.topMargin: 10
+                anchors.topMargin: 2
                 text: aircraftInfo.model + " - " + aircraftInfo.registration
                 color: "#000000" // Black text for contrast
             }
@@ -334,67 +334,78 @@ Rectangle {
                 id: aircraftImage
                 anchors.top: aircraftInfoText.bottom
                 anchors.horizontalCenter: parent.horizontalCenter
-                anchors.topMargin: 10
+                anchors.topMargin: 2
                 width: parent.width * 0.8
-                height: width
                 source: aircraftInfo.aircraftImageUrl
                 fillMode: Image.PreserveAspectFit
                 smooth: true
             }
             GridLayout {
                 id: contents
-                columns: 3
-                anchors.leftMargin: 10
-                Layout.margins: 4
+                columns: 2
                 anchors.top: aircraftImage.bottom
+                anchors.horizontalCenter: parent.horizontalCenter
                 anchors.topMargin: 10
+                anchors.leftMargin: 40
+                anchors.rightMargin: 40
+                rowSpacing: 10
+                columnSpacing: 20
 
                 Text {
-                    id: aircraftOperator
-                    anchors.leftMargin: 10
-                    text: "Operator: " + aircraftInfo.operator ?? "N/A"
-                    font.pixelSize: 24 // Smaller font for readability
-                    color: "#000000" // Black text for contrast
-                }
-                Text {
-                    id: aircraftRoute
-                    anchors.leftMargin: 10
-                    text: "Route:" + aircraftInfo.route
-                    font.pixelSize: 24 // Smaller font for readability
-                    color: "#000000" // Black text for contrast
+                    Layout.fillWidth: true
+                    text: "Speed: " + (aircraftInfo.speed) + "kt"
+                    font.pixelSize: 24
+                    color: "#000000"
                 }
 
                 Text {
-                    id: aircraftCallsign
-                    anchors.leftMargin: 10
-                    visible: aircraftInfo.callsign.length > 0
-                    text: "Callsign: " + aircraftInfo.callsign
-                    font.pixelSize: 20 // Smaller font for readability
-                    color: "#000000" // Black text for contrast
+                    Layout.fillWidth: true
+                    text: "Altitude: " + (aircraftInfo.altitude) + "ft"
+                    font.pixelSize: 24
+                    color: "#000000"
                 }
 
                 Text {
-                    id: aircraftDeparture
-                    anchors.leftMargin: 10
-                    text: "Departure: " + aircraftInfo.departureAirport ?? "N/A"
-                    font.pixelSize: 20 // Smaller font for readability
-                    color: "#000000" // Black text for contrast
+                    Layout.fillWidth: true
+                    text: "Operator: " + (aircraftInfo.operator || "N/A")
+                    font.pixelSize: 24
+                    color: "#000000"
                 }
 
                 Text {
-                    id: aircraftArrival
-                    anchors.leftMargin: 10
-                    text: "Arrival: " + aircraftInfo.arrivalAirport ?? "N/A"
-                    font.pixelSize: 20 // Smaller font for readability
-                    color: "#000000" // Black text for contrast
+                    Layout.fillWidth: true
+                    text: "Route: " + (aircraftInfo.route || "N/A")
+                    font.pixelSize: 24
+                    color: "#000000"
                 }
 
                 Text {
-                    id: aircraftCountry
-                    anchors.leftMargin: 10
-                    text: "Country: " + aircraftInfo.country ?? "N/A"
-                    font.pixelSize: 20 // Smaller font for readability
-                    color: "#000000" // Black text for contrast
+                    Layout.fillWidth: true
+                    visible: aircraftInfo.callsign && aircraftInfo.callsign.length > 0
+                    text: "Callsign: " + (aircraftInfo.callsign || "N/A")
+                    font.pixelSize: 24
+                    color: "#000000"
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Departure: " + (aircraftInfo.departureAirport || "N/A")
+                    font.pixelSize: 24
+                    color: "#000000"
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Arrival: " + (aircraftInfo.arrivalAirport || "N/A")
+                    font.pixelSize: 24
+                    color: "#000000"
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Country: " + (aircraftInfo.country || "N/A")
+                    font.pixelSize: 24
+                    color: "#000000"
                 }
             }
         }

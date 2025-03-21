@@ -255,6 +255,8 @@ func GetAircraftInfo(flightId string) AircraftInfoResponse {
 	} else if len(flight.Aircraft.Images.Thumbnails) > 0 {
 		imageUrl = flight.Aircraft.Images.Thumbnails[0].Src
 	}
+	speed := flight.Trail[0].Spd
+	altitude := flight.Trail[0].Alt
 	fmt.Println(imageUrl)
 	return AircraftInfoResponse{
 		AircraftImageUrl: imageUrl,
@@ -267,5 +269,7 @@ func GetAircraftInfo(flightId string) AircraftInfoResponse {
 		FlightId:         flight.Identification.ID,
 		DepartureAirport: flight.Airport.Origin.Name,
 		ArrivalAirport:   flight.Airport.Destination.Name,
+		Speed:            speed,
+		Altitude:         altitude,
 	}
 }
