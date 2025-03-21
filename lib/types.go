@@ -118,6 +118,7 @@ type BackendAircraft struct {
 	Operator     string  `json:"operator"`
 	Registration string  `json:"registration"`
 	Distance     float64 `json:"distance"`
+	FlightId     string  `json:"flightId"`
 }
 
 type BackendAircraftResponse struct {
@@ -131,6 +132,7 @@ type BackendMostTrackedAircraft struct {
 	Flight   string `json:"flight"`
 	Squawk   string `json:"squawk"`
 	Callsign string `json:"callsign"`
+	FlightId string `json:"flightId"`
 }
 
 type BackendMostTrackedAircraftResponse struct {
@@ -152,4 +154,21 @@ type NearestAircraftRequestBody struct {
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
 	Radius    float64 `json:"radius"`
+}
+
+type AircraftInfoRequestBody struct {
+	FlightId string `json:"flightId"`
+}
+
+type AircraftInfoResponse struct {
+	AircraftImageUrl string `json:"aircraftImageUrl"`
+	Country          string `json:"country"`
+	Model            string `json:"model"`
+	Registration     string `json:"registration"`
+	Route            string `json:"route"`
+	Operator         string `json:"operator"`
+	Callsign         string `json:"callsign"`
+	FlightId         string `json:"flightId"`
+	DepartureAirport string `json:"departureAirport"`
+	ArrivalAirport   string `json:"arrivalAirport"`
 }

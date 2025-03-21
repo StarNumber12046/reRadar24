@@ -1,5 +1,6 @@
 import QtQuick 2.5
 import QtQuick.Controls 2.5
+import QtQuick.Layouts 2.5
 import net.asivery.AppLoad 1.0
 
 Rectangle {
@@ -10,9 +11,15 @@ Rectangle {
     property real latitude: 41.9029  // Default latitude (Rome, Italy)
     property real longitude: 12.4964 // Default longitude
     property real radius: 50.0       // Default search radius in Nm
-
+    property var aircraftInfo: {}
     property var waypoints: [] // List of waypoints
+    function showPopup() {
+        popupLayer.visible = true;
+    }
 
+    function hidePopup() {
+        popupLayer.visible = false;
+    }
     // AppLoad component for backend communications
     AppLoad {
         id: appload
@@ -39,7 +46,8 @@ Rectangle {
                     nearestAircraftModel.clear();
                     json_contents.aircraft.forEach(a => {
                         nearestAircraftModel.append({
-                            info: `${a.model} (${a.registration}) | ${a.route} (${a.operator}) | Distance: ${Math.trunc(a.distance, 4)}Nm`
+                            info: `${a.model} (${a.registration}) | ${a.route} (${a.operator}) | Distance: ${Math.trunc(a.distance, 4)}Nm`,
+                            flightId: a.flightId
                         });
                     });
                 } else if (json_contents.category === "mostTracked") {
@@ -47,7 +55,8 @@ Rectangle {
                     json_contents.aircraft.forEach(a => {
                         console.log(a);
                         mostTrackedAircraftModel.append({
-                            info: `${a.callsign} | Model: ${a.model} | Route: ${a.route} (${a.flight}) | Squawk: ${a.squawk}`
+                            info: `${a.callsign} | Model: ${a.model} | Route: ${a.route} (${a.flight}) | Squawk: ${a.squawk}`,
+                            flightId: a.flightId
                         });
                     });
                 }
@@ -55,6 +64,11 @@ Rectangle {
             case 102:
                 waypoints = json_contents.waypoints;
                 console.log("wp: ", waypoints);
+                break;
+            case 103:
+                aircraftInfo = json_contents;
+                console.log("aircraftInfo: ", aircraftInfo);
+                showPopup();
                 break;
             }
         }
@@ -69,6 +83,12 @@ Rectangle {
 
         function requestMostTrackedAircraft() {
             sendMessage(2, "{}");
+        }
+
+        function requestAircraftInfo(flightId) {
+            sendMessage(4, JSON.stringify({
+                flightId: flightId
+            }));
         }
 
         function requestWaypoints() {
@@ -243,10 +263,138 @@ Rectangle {
                 color: "white"
 
                 Text {
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            appload.requestAircraftInfo(flightId);
+                        }
+                    }
                     anchors.centerIn: parent
                     text: info
                     font.pointSize: 24
                     color: "black"
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        id: popupLayer
+        anchors.fill: parent
+        color: "#FFFFFF" // White background for better e-ink contrast
+        visible: false
+        z: 999
+
+        Rectangle {
+            id: popup
+            width: parent.width * 0.8
+            height: parent.height * 0.8
+            // z: 999
+            anchors.centerIn: parent
+            color: "#ffffff" // Black popup for high contrast
+            radius: 0 // No rounded corners for better e-ink rendering
+            border.color: "#555555" // Dark grey border
+            border.width: 2
+
+            // Close 'X' button at the top right
+            Button {
+                id: closeButton
+                anchors.topMargin: 4
+                anchors.rightMargin: 4
+                rightPadding: 4
+                topPadding: 4
+                text: "X"
+                anchors.top: parent.top
+                anchors.right: parent.right
+                width: 40
+                height: 40
+                onClicked: hidePopup()
+                contentItem: Text {
+                    text: parent.text
+                    font.pixelSize: 25
+                    color: "#000"
+                }
+                background: Rectangle {
+                    color: rgba(255, 255, 255, 0)
+                }
+            }
+
+            Text {
+                id: aircraftInfoText
+                anchors.top: parent.top
+                anchors.horizontalCenter: parent.horizontalCenter
+                font.pixelSize: 48 // Larger font for readability
+                font.bold: true
+                anchors.topMargin: 10
+                text: aircraftInfo.model + " - " + aircraftInfo.registration
+                color: "#000000" // Black text for contrast
+            }
+
+            Image {
+                id: aircraftImage
+                anchors.top: aircraftInfoText.bottom
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.topMargin: 10
+                width: parent.width * 0.8
+                height: width
+                source: aircraftInfo.aircraftImageUrl
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+            }
+            GridLayout {
+                id: contents
+                columns: 3
+                anchors.leftMargin: 10
+                Layout.margins: 4
+                anchors.top: aircraftImage.bottom
+                anchors.topMargin: 10
+
+                Text {
+                    id: aircraftOperator
+                    anchors.leftMargin: 10
+                    text: "Operator: " + aircraftInfo.operator ?? "N/A"
+                    font.pixelSize: 24 // Smaller font for readability
+                    color: "#000000" // Black text for contrast
+                }
+                Text {
+                    id: aircraftRoute
+                    anchors.leftMargin: 10
+                    text: "Route:" + aircraftInfo.route
+                    font.pixelSize: 24 // Smaller font for readability
+                    color: "#000000" // Black text for contrast
+                }
+
+                Text {
+                    id: aircraftCallsign
+                    anchors.leftMargin: 10
+                    visible: aircraftInfo.callsign.length > 0
+                    text: "Callsign: " + aircraftInfo.callsign
+                    font.pixelSize: 20 // Smaller font for readability
+                    color: "#000000" // Black text for contrast
+                }
+
+                Text {
+                    id: aircraftDeparture
+                    anchors.leftMargin: 10
+                    text: "Departure: " + aircraftInfo.departureAirport ?? "N/A"
+                    font.pixelSize: 20 // Smaller font for readability
+                    color: "#000000" // Black text for contrast
+                }
+
+                Text {
+                    id: aircraftArrival
+                    anchors.leftMargin: 10
+                    text: "Arrival: " + aircraftInfo.arrivalAirport ?? "N/A"
+                    font.pixelSize: 20 // Smaller font for readability
+                    color: "#000000" // Black text for contrast
+                }
+
+                Text {
+                    id: aircraftCountry
+                    anchors.leftMargin: 10
+                    text: "Country: " + aircraftInfo.country ?? "N/A"
+                    font.pixelSize: 20 // Smaller font for readability
+                    color: "#000000" // Black text for contrast
                 }
             }
         }

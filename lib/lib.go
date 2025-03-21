@@ -10,7 +10,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/a-finocchiaro/go-flightradar24-sdk/pkg/client"
+	"github.com/a-finocchiaro/go-flightradar24-sdk/pkg/models/common"
 	"github.com/a-finocchiaro/go-flightradar24-sdk/pkg/models/flights"
+	"github.com/a-finocchiaro/go-flightradar24-sdk/webrequest"
 )
 
 //go:embed datasets/*
@@ -116,7 +119,7 @@ func stringOr(s string, def string) string {
 	return def
 }
 
-func FormatFeedFlight(aircraft []flights.FeedFlightData, lat, lon float64) BackendAircraftResponse {
+func FormatFeedFlight(aircraft map[string]flights.FeedFlightData, lat, lon float64) BackendAircraftResponse {
 	// Declare plane and initialize it to avoid nil values
 	types := GetAircraftTypes()
 	airlines, err := LoadAirlines()
@@ -128,7 +131,7 @@ func FormatFeedFlight(aircraft []flights.FeedFlightData, lat, lon float64) Backe
 		}
 	}
 	var formatted_aircraft []BackendAircraft
-	for _, plane := range aircraft {
+	for flightId, plane := range aircraft {
 		// Declare plane and initialize it to avoid nil values
 		var current_plane AircraftElement
 		var current_airline Airline
@@ -158,6 +161,7 @@ func FormatFeedFlight(aircraft []flights.FeedFlightData, lat, lon float64) Backe
 			Route:        stringOr(plane.Origin_airport_iata, "N/A") + "->" + stringOr(plane.Destination_airport_iata, "N/A"),
 			Operator:     stringOr(current_airline.Name, "private owner"),
 			Registration: stringOr(plane.Registration, "N/A"),
+			FlightId:     flightId,
 			Distance:     Haversine(lat, lon, float64(plane.Lat), float64(plane.Long)),
 		}
 		formatted_aircraft = append(formatted_aircraft, formatted_plane)
@@ -190,6 +194,7 @@ func FormatMostTracked(aircraft []flights.Fr24MostTrackedData) BackendMostTracke
 			Flight:   stringOr(plane.Flight, "private owner"),
 			Squawk:   stringOr(plane.Squawk, "N/A"),
 			Callsign: stringOr(plane.Callsign, "N/A"),
+			FlightId: plane.Flight_id,
 		}
 		formatted_aircraft = append(formatted_aircraft, formatted_plane)
 	}
@@ -228,4 +233,39 @@ func GetUserWaypoints() []Waypoint {
 		return waypoints
 	}
 	return waypoints
+}
+
+func GetAircraftInfo(flightId string) AircraftInfoResponse {
+	var requester common.Requester = webrequest.SendRequest
+	flight, err := client.GetFlightDetails(requester, flightId)
+	fmt.Println("---------GOT FLIGHT----------")
+	var f, _ = json.Marshal(flight)
+	fmt.Println(string(f))
+	if err != nil {
+		fmt.Println(err)
+		return AircraftInfoResponse{}
+	}
+	fmt.Println("Status:" + flight.Status.Text)
+	var imageUrl string
+	if len(flight.Aircraft.Images.Large) > 0 {
+		imageUrl = flight.Aircraft.Images.Large[0].Src
+		fmt.Printf("{\"Copyright\": \"%s\", \"Src\": \"%s\", \"Link\": \"%s\", \"Source\": \"%s\"}\n", flight.Aircraft.Images.Large[0].Copyright, flight.Aircraft.Images.Large[0].Src, flight.Aircraft.Images.Large[0].Link, flight.Aircraft.Images.Large[0].Source)
+	} else if len(flight.Aircraft.Images.Medium) > 0 {
+		imageUrl = flight.Aircraft.Images.Medium[0].Src
+	} else if len(flight.Aircraft.Images.Thumbnails) > 0 {
+		imageUrl = flight.Aircraft.Images.Thumbnails[0].Src
+	}
+	fmt.Println(imageUrl)
+	return AircraftInfoResponse{
+		AircraftImageUrl: imageUrl,
+		Country:          flight.Aircraft.Country.Name,
+		Model:            flight.Aircraft.Model.Text,
+		Registration:     flight.Aircraft.Registration,
+		Route:            stringOr(flight.Airport.Origin.Code.Iata, "N/A") + "->" + stringOr(flight.Airport.Destination.Code.Iata, "N/A"),
+		Operator:         stringOr(flight.Airline.Name, stringOr(flight.Owner.Name, "private owner")),
+		Callsign:         flight.Identification.Callsign,
+		FlightId:         flight.Identification.ID,
+		DepartureAirport: flight.Airport.Origin.Name,
+		ArrivalAirport:   flight.Airport.Destination.Name,
+	}
 }

@@ -19,10 +19,12 @@ const (
 	NearestAircraftRequest     MessageType = 1
 	MostTrackedAircraftRequest MessageType = 2
 	WaypointsRequest           MessageType = 3
+	AircraftInfoRequest        MessageType = 4
 
 	NearestAircraftResponse     MessageType = 101
 	MostTrackedAircraftResponse MessageType = 101
 	WaypointsResponse           MessageType = 102
+	AircraftInfoResponse        MessageType = 103
 )
 
 // Example implementation of AppLoadBackend
@@ -52,12 +54,7 @@ func (eb *ReRadarBackend) HandleMessage(replier *appload.BackendReplier, message
 		zone := client.GetBoundsByPoint(body.Latitude, body.Longitude, body.Radius*1852)
 		aircraftNear, _ := client.GetFlightsInZone(requester, zone)
 
-		var properAircraft []flights.FeedFlightData
-		for _, aircraft := range aircraftNear.Flights {
-			properAircraft = append(properAircraft, aircraft)
-		}
-
-		plen := lib.FormatFeedFlight(properAircraft, body.Latitude, body.Longitude)
+		plen := lib.FormatFeedFlight(aircraftNear.Flights, body.Latitude, body.Longitude)
 		nearestAircraft, err := json.Marshal(plen)
 		if err != nil {
 			replier.SendMessage(uint32(NearestAircraftResponse), "Error formatting response: "+err.Error())
@@ -102,6 +99,25 @@ func (eb *ReRadarBackend) HandleMessage(replier *appload.BackendReplier, message
 		}
 
 		replier.SendMessage(uint32(WaypointsResponse), string(waypointsReplyJson))
+		return
+	}
+
+	if message.MsgType == uint32(AircraftInfoRequest) {
+		var body lib.AircraftInfoRequestBody
+		if err := json.Unmarshal([]byte(message.Contents), &body); err != nil {
+			replier.SendMessage(uint32(AircraftInfoResponse), "Error parsing request body: "+err.Error())
+			return
+		}
+		fmt.Println(body.FlightId)
+
+		info := lib.GetAircraftInfo(body.FlightId)
+		var info_json []byte
+		info_json, err := json.Marshal(info)
+		if err != nil {
+			replier.SendMessage(uint32(AircraftInfoResponse), "Error formatting response: "+err.Error())
+			return
+		}
+		replier.SendMessage(uint32(AircraftInfoResponse), string(info_json))
 		return
 	}
 }
