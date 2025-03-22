@@ -439,6 +439,20 @@ Rectangle {
                     font.pixelSize: 24
                     color: "#000000"
                 }
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Takeoff: " + (aircraftInfo.takeOffTime || "N/A")
+                    font.pixelSize: 24
+                    color: "#000000"
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Landing: " + (aircraftInfo.landingTime || "N/A")
+                    font.pixelSize: 24
+                    color: "#000000"
+                }
             }
         }
     }

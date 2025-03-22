@@ -9,11 +9,14 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"sort"
+	"time"
 
 	"github.com/a-finocchiaro/go-flightradar24-sdk/pkg/client"
 	"github.com/a-finocchiaro/go-flightradar24-sdk/pkg/models/common"
 	"github.com/a-finocchiaro/go-flightradar24-sdk/pkg/models/flights"
 	"github.com/a-finocchiaro/go-flightradar24-sdk/webrequest"
+	"github.com/dustin/go-humanize"
 )
 
 //go:embed datasets/*
@@ -166,6 +169,9 @@ func FormatFeedFlight(aircraft map[string]flights.FeedFlightData, lat, lon float
 		}
 		formatted_aircraft = append(formatted_aircraft, formatted_plane)
 	}
+	sort.Slice(formatted_aircraft, func(i, j int) bool {
+		return formatted_aircraft[i].Distance < formatted_aircraft[j].Distance
+	})
 	return BackendAircraftResponse{
 		Category: "nearest",
 		Aircraft: formatted_aircraft,
@@ -252,6 +258,18 @@ func GetAircraftInfo(flightId string) AircraftInfoResponse {
 	}
 	speed := flight.Trail[0].Spd
 	altitude := flight.Trail[0].Alt
+	var takeOffTime, landingTime int
+	if flight.Time.Real.Departure > 0 {
+		takeOffTime = flight.Time.Real.Departure
+	} else {
+		takeOffTime = flight.Time.Estimated.Departure
+	}
+	if flight.Time.Estimated.Arrival > 0 {
+		landingTime = flight.Time.Estimated.Arrival
+	} else {
+		landingTime = flight.Time.Real.Arrival
+	}
+
 	return AircraftInfoResponse{
 		AircraftImageUrl: imageUrl,
 		Country:          flight.Aircraft.Country.Name,
@@ -265,5 +283,7 @@ func GetAircraftInfo(flightId string) AircraftInfoResponse {
 		ArrivalAirport:   flight.Airport.Destination.Name,
 		Speed:            speed,
 		Altitude:         altitude,
+		TakeOffTime:      humanize.Time(time.Unix(int64(takeOffTime), 0)),
+		LandingTime:      humanize.Time(time.Unix(int64(landingTime), 0)),
 	}
 }

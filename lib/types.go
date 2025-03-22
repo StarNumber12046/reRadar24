@@ -174,4 +174,6 @@ type AircraftInfoResponse struct {
 	ArrivalAirport   string `json:"arrivalAirport"`
 	Speed            int    `json:"speed"`
 	Altitude         int    `json:"altitude"`
+	TakeOffTime      string `json:"takeOffTime"`
+	LandingTime      string `json:"landingTime"`
 }
